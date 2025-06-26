@@ -5,31 +5,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat App</title>
     <style>
+      body {
+        font-family: sans-serif;
+      }
       .chat {
         display: flex;
         flex-direction: column;
         height: 80vh;
+        max-width: 800px;
+        margin: 0 auto;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
       }
       .messages {
         flex: 1;
         overflow-y: auto;
         list-style: none;
-        padding: 0;
+        padding: 10px;
         margin: 0;
+        background-color: #f9f9f9;
+      }
+      .message-item {
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .message-content {
+        margin-bottom: 5px;
+      }
+      .reactions {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+      .reaction-button {
+        background-color: #e0e0e0;
+        border: none;
+        border-radius: 15px;
+        padding: 5px 10px;
+        cursor: pointer;
+        font-size: 0.8em;
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        transition: background-color 0.2s;
+      }
+      .reaction-button:hover {
+        background-color: #d0d0d0;
+      }
+      .reaction-counter {
+        font-size: 0.7em;
+        color: #555;
       }
       .form {
         display: flex;
+        padding: 10px;
+        border-top: 1px solid #eee;
+        background-color: #fff;
       }
       .input {
         flex: 1;
         padding: 10px;
         border: 1px solid #ccc;
+        border-radius: 4px;
+        margin-right: 5px;
       }
       .submit {
-        padding: 10px;
-        border: 1px solid #ccc;
-        background: #eee;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        background: #007bff;
+        color: white;
         cursor: pointer;
+        transition: background-color 0.2s;
+      }
+      .submit:hover {
+        background: #0056b3;
+      }
+      .my-message {
+        text-align: right;
+      }
+      .my-message .message-item {
+        background-color: #dcf8c6;
+        margin-left: auto;
+      }
+      .canvas-container {
+        margin-top: 20px;
+        text-align: center;
+      }
+      #canvas {
+        border: solid 1px black;
       }
     </style>
   </head>
@@ -37,121 +105,158 @@
     <div class="chat">
       <ul class="messages"></ul>
       <form class="form">
-        <input class="input" autocomplete="off" />
+        <input class="input" autocomplete="off" placeholder="メッセージを入力..." />
         <button class="submit">Send</button>
       </form>
     </div>
-    <canvas
-      id="canvas"
-      width="600"
-      height="600"
-      style="border: solid 1px black"
-    ></canvas>
+
+    <div class="canvas-container">
+      <h3>共有お絵かきボード</h3>
+      <canvas id="canvas" width="600" height="400"></canvas>
+    </div>
 
     <script>
       function main() {
-        const host = location.origin.replace(/^http/, 'ws')
-        const ws = new WebSocket(host + '/ws')
-        const myId = self.crypto.randomUUID().substr(0, 8)
+        const host = location.origin.replace(/^http/, 'ws');
+        const ws = new WebSocket(host + '/ws');
+        const myId = self.crypto.randomUUID().substr(0, 8);
 
-        const canvas = document.getElementById('canvas')
-        const ctx = canvas.getContext('2d')
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        ctx.lineWidth = 2; // 線の太さ
+        ctx.lineJoin = 'round'; // 線の結合部
+        ctx.lineCap = 'round'; // 線の端
+        ctx.strokeStyle = '#000'; // 線の色
 
-        let drawing = false
+        let drawing = false;
 
         canvas.addEventListener('mousedown', (e) => {
-          sendDrawingEvent(e.offsetX, e.offsetY, 'mousedown')
-        })
-        function mousedown() {
-          drawing = true
-          ctx.beginPath()
-        }
+          drawing = true;
+          sendDrawingEvent(e.offsetX, e.offsetY, 'mousedown');
+        });
 
         canvas.addEventListener('mousemove', (e) => {
           if (drawing) {
-            sendDrawingEvent(e.offsetX, e.offsetY, 'mousemove')
+            sendDrawingEvent(e.offsetX, e.offsetY, 'mousemove');
           }
-        })
-        function mousemove(x, y) {
-          if (drawing) {
-            draw(x, y, true)
-          }
-        }
+        });
 
         canvas.addEventListener('mouseup', (e) => {
-          sendDrawingEvent(e.offsetX, e.offsetY, 'mouseup')
-        })
-        function mouseup() {
-          drawing = false
-          ctx.beginPath()
-        }
+          drawing = false;
+          sendDrawingEvent(e.offsetX, e.offsetY, 'mouseup');
+        });
 
         canvas.addEventListener('mouseout', (e) => {
-          sendDrawingEvent(e.offsetX, e.offsetY, 'mouseout')
-        })
-        function mouseout() {
-          drawing = false
-        }
+          drawing = false;
+          sendDrawingEvent(e.offsetX, e.offsetY, 'mouseout');
+        });
 
-        function draw(x, y, dragging) {
-          if (dragging) {
-            ctx.lineTo(x, y)
-            ctx.stroke()
-          } else {
-            ctx.moveTo(x, y)
+        function draw(x, y, control) {
+          if (control === 'mousedown') {
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+          } else if (control === 'mousemove') {
+            ctx.lineTo(x, y);
+            ctx.stroke();
+          } else if (control === 'mouseup' || control === 'mouseout') {
+            ctx.closePath();
           }
         }
 
         function sendDrawingEvent(x, y, control) {
-          const message = JSON.stringify({ x, y, control, type: 'paint' })
-          ws.send(message)
+          const message = JSON.stringify({ x, y, control, type: 'paint' });
+          ws.send(message);
         }
+
+        const messageList = document.querySelector('.messages');
 
         ws.onmessage = (event) => {
-          const msg = JSON.parse(event.data)
+          const msg = JSON.parse(event.data);
           if (msg.type === 'paint') {
-            const { x, y, control } = msg
-            console.log({ control })
-            if (control === 'mousedown') {
-              mousedown()
-            } else if (control === 'mouseup') {
-              mouseup()
-            } else if (control === 'mousemove') {
-              mousemove(x, y)
-            } else if (control === 'mouseout') {
-              mouseout()
-            }
-          }
-          if (msg.type === 'chat') {
-            const { id, text } = msg
-            const messageList = document.querySelector('.messages')
-            const li = document.createElement('li')
+            const { x, y, control } = msg;
+            draw(x, y, control);
+          } else if (msg.type === 'chat') {
+            const { id, text, messageId, reactions } = msg;
+            const li = document.createElement('li');
+            li.classList.add('message-item');
+            li.setAttribute('data-message-id', messageId);
+
+            const messageContent = document.createElement('div');
+            messageContent.classList.add('message-content');
             if (id === myId) {
-              li.textContent = `(${id})自分:` + text
+              li.classList.add('my-message');
+              messageContent.textContent = `(${id})自分: ` + text;
             } else {
-              li.textContent = id + ': ' + text
+              messageContent.textContent = id + ': ' + text;
             }
-            messageList.appendChild(li)
+            li.appendChild(messageContent);
+
+            const reactionsDiv = document.createElement('div');
+            reactionsDiv.classList.add('reactions');
+
+            const reactionTypes = ['good', 'bad', 'excited', 'interesting', 'sad'];
+            reactionTypes.forEach(reactionType => {
+              const button = document.createElement('button');
+              button.classList.add('reaction-button');
+              button.textContent = getReactionEmoji(reactionType); // 絵文字を設定
+              button.dataset.reactionType = reactionType;
+              button.addEventListener('click', () => {
+                ws.send(JSON.stringify({ type: 'reaction', messageId: messageId, reactionType: reactionType }));
+              });
+
+              const counterSpan = document.createElement('span');
+              counterSpan.classList.add('reaction-counter');
+              counterSpan.textContent = reactions[reactionType] || 0; // 初期値を表示
+              counterSpan.setAttribute('data-reaction-type', reactionType);
+
+              button.appendChild(counterSpan);
+              reactionsDiv.appendChild(button);
+            });
+
+            li.appendChild(reactionsDiv);
+            messageList.appendChild(li);
+            messageList.scrollTop = messageList.scrollHeight; // スクロールを最下部に
+          } else if (msg.type === 'reactionUpdate') {
+            const { messageId, reactionType, count } = msg;
+            const targetMessageLi = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (targetMessageLi) {
+              const counterSpan = targetMessageLi.querySelector(`.reaction-counter[data-reaction-type="${reactionType}"]`);
+              if (counterSpan) {
+                counterSpan.textContent = count;
+              }
+            }
           }
         }
 
-        const form = document.querySelector('.form')
+        function getReactionEmoji(type) {
+          switch (type) {
+            case 'good': return '👍';
+            case 'bad': return '👎';
+            case 'excited': return '🤩';
+            case 'interesting': return '💡';
+            case 'sad': return '😢';
+            default: return '';
+          }
+        }
+
+        const form = document.querySelector('.form');
 
         form.onsubmit = function (e) {
-          e.preventDefault()
-          const input = document.querySelector('.input')
-          const text = input.value
-          ws.send(JSON.stringify({ id: myId, text, type: 'chat' }))
-          input.value = ''
-          input.focus()
-        }
+          e.preventDefault();
+          const input = document.querySelector('.input');
+          const text = input.value;
+          if (text.trim() === '') return; // 空のメッセージは送信しない
+          ws.send(JSON.stringify({ id: myId, text, type: 'chat' }));
+          input.value = '';
+          input.focus();
+        };
 
         ws.onerror = function (error) {
-          console.error('WebSocket Error: ', error)
-        }
+          console.error('WebSocket Error: ', error);
+        };
       }
 
-      main()
+      main();
     </script>
   </body>
 </html>
