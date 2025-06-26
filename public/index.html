@@ -20,7 +20,7 @@
         flex-direction: column;
         width: 100%;
         max-width: 600px;
-        height: 90vh; /* 高さの調整 */
+        height: 90vh;
         background-color: #fff;
         border-radius: 12px;
         box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
@@ -34,7 +34,8 @@
         margin: 0;
         background-color: #e9ebee;
       }
-      /* スクロールバーのスタイル */
+      
+      /* スクロールバー */
       .messages::-webkit-scrollbar {
         width: 8px;
       }
@@ -52,7 +53,7 @@
 
       .message-item {
         display: flex;
-        flex-direction: column; /* メッセージとリアクションを縦に並べる */
+        flex-direction: column;
         align-items: flex-start;
         margin-bottom: 15px;
         padding: 12px;
@@ -63,20 +64,20 @@
       .message-content {
         display: flex;
         align-items: center;
-        width: 100%; /* 親要素の幅いっぱいに広げる */
+        width: 100%;
       }
       .message-text {
         margin-left: 10px;
         font-size: 1em;
         color: #333;
-        word-break: break-word; /* 長い単語を折り返す */
+        word-break: break-word;
       }
       .avatar {
-        width: 35px; /* アバターのサイズを少し大きく */
+        width: 35px; /* アバターのサイズを少し大きくする */
         height: 35px;
         border-radius: 50%;
         object-fit: cover;
-        flex-shrink: 0; /* 縮小されないようにする */
+        flex-shrink: 0;
       }
       .reactions {
         display: flex;
@@ -111,7 +112,7 @@
         margin-left: 6px;
         font-weight: bold;
         color: #555;
-        min-width: 15px; /* カウンターが0でもスペースを確保 */
+        min-width: 15px;
         text-align: center;
       }
       .reaction-icon {
@@ -170,22 +171,20 @@
 
     <script>
       function main() {
-        // クライアントのユニークIDを生成
+        // クライアントのユニークID
         const myId = self.crypto.randomUUID().substr(0, 8);
 
         // WebSocket接続のためのホストURLを決定
         const host = location.origin.replace(/^http/, 'ws');
         const ws = new WebSocket(host + '/ws');
-
-        // DOM要素の参照を取得
+        
         const form = document.querySelector('.form');
         const messageList = document.querySelector('.messages');
 
         // messageIdをキーとして、対応するメッセージのDOM要素を格納するMap
-        // これにより、リアクション更新時に目的のメッセージ要素を素早く見つけることができる
         const messageElements = new Map();
 
-        // リアクションタイプとそれに対応する絵文字のマッピング
+        // リアクションタイプとそれに対応する絵文字
         const reactionsMapping = {
           good: '👍',
           bad: '👎',
@@ -196,9 +195,9 @@
 
         // フォームが送信されたときの処理
         form.onsubmit = function (e) {
-          e.preventDefault(); // デフォルトのフォーム送信を防ぐ
+          e.preventDefault();
           const input = document.querySelector('.input');
-          const text = input.value.trim(); // 入力値の前後空白を除去
+          const text = input.value.trim();
 
           if (text) {
             // テキストが空でない場合のみメッセージを送信
@@ -207,55 +206,52 @@
               senderId: myId,      // 送信者のID
               text: text,          // メッセージ本文
             };
-            // JSON文字列に変換してWebSocketで送信
+
             ws.send(JSON.stringify(messagePayload));
             input.value = ''; // 入力フィールドをクリア
           }
-          input.focus(); // 入力フィールドにフォーカスを戻す
+          input.focus();
         };
 
         // WebSocketからメッセージを受信したときの処理
         ws.onmessage = function (event) {
-          const parsedData = JSON.parse(event.data); // 受信したJSONデータをパース
+          const parsedData = JSON.parse(event.data);
 
           if (parsedData.type === 'chat_message') {
             // 新しいチャットメッセージを受信した場合
             const { messageId, senderId, text, reactions } = parsedData;
 
-            // メッセージを表示するためのリストアイテム(li)を作成
             const li = document.createElement('li');
             li.className = 'message-item';
-            li.dataset.messageId = messageId; // messageIdをdata属性に保存
+            li.dataset.messageId = messageId;
 
-            // メッセージ内容（アバターとテキスト）を表示するdivを作成
             const messageContentDiv = document.createElement('div');
             messageContentDiv.className = 'message-content';
 
-            // アバター画像を作成
+            // アバター画像作成
             const img = document.createElement('img');
             img.src = `https://api.dicebear.com/9.x/rings/svg?seed=${senderId}`;
             img.alt = 'Avatar';
             img.className = 'avatar';
             messageContentDiv.appendChild(img);
 
-            // メッセージテキストを作成
+            // メッセージテキスト作成
             const spanText = document.createElement('span');
             spanText.className = 'message-text';
             spanText.textContent = `${senderId}: ${text}`;
             messageContentDiv.appendChild(spanText);
 
-            li.appendChild(messageContentDiv); // liにメッセージ内容を追加
+            li.appendChild(messageContentDiv);
 
-            // リアクションボタン群を表示するdivを作成
+            // リアクションボタン群表示
             const reactionsDiv = document.createElement('div');
             reactionsDiv.className = 'reactions';
 
-            // 各リアクションタイプに対応するボタンとカウンターを作成
+            // 各リアクションタイプのボタンとカウンター作成
             for (const reactionType in reactionsMapping) {
               if (reactionsMapping.hasOwnProperty(reactionType)) {
                 const button = document.createElement('button');
                 button.className = 'reaction-button';
-                // 絵文字とカウンターの初期値を設定
                 button.innerHTML = `
                   <span class="reaction-icon">${reactionsMapping[reactionType]}</span>
                   <span data-reaction-type="${reactionType}">${reactions[reactionType]}</span>
@@ -265,29 +261,25 @@
                 button.onclick = () => {
                   const reactionPayload = {
                     type: 'reaction',        // メッセージタイプは「リアクション」
-                    messageId: messageId,    // どのメッセージに対するリアクションか
-                    reactionType: reactionType, // どのリアクションタイプか
+                    messageId: messageId,    // どのメッセージに対するリアクション
+                    reactionType: reactionType, // リアクションタイプ
                   };
-                  ws.send(JSON.stringify(reactionPayload)); // JSON文字列に変換して送信
+                  ws.send(JSON.stringify(reactionPayload));
                 };
-                reactionsDiv.appendChild(button); // リアクションdivにボタンを追加
+                reactionsDiv.appendChild(button);
               }
             }
-            li.appendChild(reactionsDiv); // liにリアクションdivを追加
+            li.appendChild(reactionsDiv);
 
-            messageList.appendChild(li); // メッセージリストに新しいメッセージを追加
-            messageElements.set(messageId, li); // messageIdとli要素の参照をMapに保存
+            messageList.appendChild(li);
+            messageElements.set(messageId, li);
 
-            // 新しいメッセージが追加されたら、スクロールを一番下まで移動
             messageList.scrollTop = messageList.scrollHeight;
           } else if (parsedData.type === 'reaction_update') {
-            // リアクションの更新を受信した場合
             const { messageId, reactionType, count } = parsedData;
-            // Mapから対象のメッセージ要素を取得
             const messageLi = messageElements.get(messageId);
 
             if (messageLi) {
-              // 特定のリアクションタイプに対応するカウンターのspan要素を検索
               const counterSpan = messageLi.querySelector(
                 `.reaction-button span[data-reaction-type="${reactionType}"]`
               );
@@ -298,23 +290,20 @@
           }
         };
 
-        // WebSocketでエラーが発生したときの処理
         ws.onerror = function (error) {
           console.error('WebSocket Error: ', error);
         };
 
-        // WebSocket接続が確立されたときの処理
         ws.onopen = function() {
-          console.log('WebSocket connection established.');
+          console.log('WebSocket connected');
         };
 
-        // WebSocket接続が閉じられたときの処理
         ws.onclose = function() {
           console.log('WebSocket connection closed.');
         };
       }
 
-      main(); // main関数を実行してアプリケーションを開始
+      main();
     </script>
   </body>
 </html>
