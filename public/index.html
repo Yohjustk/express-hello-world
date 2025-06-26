@@ -1,86 +1,91 @@
 <!DOCTYPE html>
 <html lang="ja">
-
-<head>
+  <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat App</title>
     <style>
-        .chat {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-        }
-
-        .messages {
-            flex: 1;
-            overflow-y: auto;
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .form {
-            display: flex;
-        }
-
-        .input {
-            flex: 1;
-            padding: 10px;
-            border: 1px solid #ccc;
-        }
-
-        .submit {
-            padding: 10px;
-            border: 1px solid #ccc;
-            background: #eee;
-            cursor: pointer;
-        }
+      .chat {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      .messages {
+        flex: 1;
+        overflow-y: auto;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      .form {
+        display: flex;
+      }
+      .input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid #ccc;
+      }
+      .submit {
+        padding: 10px;
+        border: 1px solid #ccc;
+        background: #eee;
+        cursor: pointer;
+      }
     </style>
-</head>
-
-<body>
+  </head>
+  <body>
     <div class="chat">
-        <ul class="messages"></ul>
-        <form class="form">
-            <input class="input" autocomplete="off" />
-            <button class="submit">Send</button>
-        </form>
+      <ul class="messages"></ul>
+      <form class="form">
+        <input class="input" autocomplete="off" />
+        <button class="submit">Send</button>
+      </form>
     </div>
 
     <script>
-        function main() {
-            const host = location.origin.replace(/^http/, 'ws')
-            const ws = new WebSocket(host + '/ws')
-            const myId = self.crypto.randomUUID().substr(0, 8)
+      function main() {
+        const myId = self.crypto.randomUUID().substr(0, 8)
 
-            const form = document.querySelector('.form')
+        const host = location.origin.replace(/^http/, 'ws')
+        const ws = new WebSocket(host + '/ws')
 
-            form.onsubmit = function (e) {
-                e.preventDefault()
-                const input = document.querySelector('.input')
-                const text = input.value
-                // ws.send(text)
-                ws.send(myId + ':' + text)
-                input.value = ''
-                input.focus()
-            }
+        const form = document.querySelector('.form')
 
-            ws.onmessage = function (msg) {
-                const response = msg.data
-                const messageList = document.querySelector('.messages')
-                const li = document.createElement('li')
-                li.textContent = response
-                messageList.appendChild(li)
-            }
-
-            ws.onerror = function (error) {
-                console.error('WebSocket Error: ', error)
-            }
+        form.onsubmit = function (e) {
+          e.preventDefault()
+          const input = document.querySelector('.input')
+          const text = input.value
+          ws.send(myId + ': ' + text)
+          input.value = ''
+          input.focus()
         }
 
-        main()
-    </script>
-</body>
+        ws.onmessage = function (msg) {
+          const response = msg.data
+          // 6a7fdb38: yoge!!
+          const [id, text] = response.split(': ')
 
+          const messageList = document.querySelector('.messages')
+          const li = document.createElement('li')
+          li.textContent = response
+          document.createElement('img')
+          const img = document.createElement('img')
+          img.src = `https://api.dicebear.com/9.x/rings/svg?seed=${id}`
+          img.alt = 'Dice'
+          img.style.width = '20px'
+          img.style.height = '20px'
+          img.style.verticalAlign = 'middle'
+          li.prepend(img)
+
+          messageList.appendChild(li)
+        }
+
+        ws.onerror = function (error) {
+          console.error('WebSocket Error: ', error)
+        }
+      }
+
+      main()
+    </script>
+  </body>
 </html>
