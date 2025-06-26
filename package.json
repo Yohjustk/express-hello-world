@@ -15,4 +15,7 @@
     "express-ws": "^5.0.2"
 
   }
+  "engines": {
+    "node": ">=14"
+  }
 }
