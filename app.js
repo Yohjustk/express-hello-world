@@ -6,8 +6,6 @@ const app = express()
 expressWs(app)
 
 const port = process.env.PORT || 3001
-
-// アクティブなWebSocket接続を保持する配列
 let connects = []
 
 // メッセージとそのリアクションの状態を保持するMap
@@ -18,23 +16,19 @@ app.use(express.static('public'))
 
 // WebSocket接続ハンドラ
 app.ws('/ws', (ws, req) => {
-  // 新しい接続をconnects配列に追加
   connects.push(ws)
   console.log('New WebSocket connection established.')
 
   // クライアントからのメッセージを受信したときの処理
   ws.on('message', (rawMessage) => {
     try {
-      // 受信したメッセージはJSON形式と仮定してパース
       const parsedMessage = JSON.parse(rawMessage)
 
-      // メッセージの種類に応じて処理を分岐
       if (parsedMessage.type === 'chat_message') {
         // 新しいチャットメッセージの場合
         const messageId = crypto.randomUUID() // メッセージごとにユニークなIDを生成
         const { senderId, text } = parsedMessage
 
-        // 新しいメッセージオブジェクトを作成し、初期リアクションカウントを設定
         const newMessage = {
           type: 'chat_message',
           messageId: messageId,
@@ -55,14 +49,13 @@ app.ws('/ws', (ws, req) => {
         // 全クライアントに新しいメッセージをブロードキャスト
         connects.forEach((socket) => {
           if (socket.readyState === 1) {
-            // WebSocket接続がオープン状態であることを確認
             socket.send(JSON.stringify(newMessage))
           }
         })
       } else if (parsedMessage.type === 'reaction') {
         // リアクションメッセージの場合
         const { messageId, reactionType } = parsedMessage
-        const messageToUpdate = messages.get(messageId) // 対象のメッセージをMapから取得
+        const messageToUpdate = messages.get(messageId)
 
         // メッセージが存在し、リアクションタイプが有効な場合
         if (messageToUpdate && messageToUpdate.reactions.hasOwnProperty(reactionType)) {
@@ -94,17 +87,15 @@ app.ws('/ws', (ws, req) => {
 
   // WebSocket接続が閉じられたときの処理
   ws.on('close', () => {
-    connects = connects.filter((conn) => conn !== ws) // 閉じられた接続を配列から削除
+    connects = connects.filter((conn) => conn !== ws)
     console.log('WebSocket connection closed.')
   })
 
-  // エラー発生時の処理
   ws.onerror = (error) => {
     console.error('WebSocket error:', error)
   }
 })
 
-// サーバーの起動
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`)
 })
