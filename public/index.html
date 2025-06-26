@@ -3,101 +3,159 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat App</title>
+    <title>Chat App with Reactions</title>
     <style>
       body {
-        font-family: sans-serif;
+        font-family: 'Inter', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f0f2f5;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
       }
       .chat {
         display: flex;
         flex-direction: column;
-        height: 80vh;
-        max-width: 800px;
-        margin: 0 auto;
-        border: 1px solid #ddd;
-        border-radius: 8px;
+        width: 100%;
+        max-width: 600px;
+        height: 90vh; /* 高さの調整 */
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         overflow: hidden;
       }
       .messages {
         flex: 1;
         overflow-y: auto;
         list-style: none;
-        padding: 10px;
+        padding: 20px;
         margin: 0;
-        background-color: #f9f9f9;
+        background-color: #e9ebee;
       }
+      /* スクロールバーのスタイル */
+      .messages::-webkit-scrollbar {
+        width: 8px;
+      }
+      .messages::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+      }
+      .messages::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+      }
+      .messages::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+
       .message-item {
-        margin-bottom: 10px;
-        padding: 8px 12px;
-        background-color: #fff;
-        border-radius: 12px;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column; /* メッセージとリアクションを縦に並べる */
+        align-items: flex-start;
+        margin-bottom: 15px;
+        padding: 12px;
+        border-radius: 10px;
+        background-color: #fdfdfd;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
       }
       .message-content {
-        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        width: 100%; /* 親要素の幅いっぱいに広げる */
+      }
+      .message-text {
+        margin-left: 10px;
+        font-size: 1em;
+        color: #333;
+        word-break: break-word; /* 長い単語を折り返す */
+      }
+      .avatar {
+        width: 35px; /* アバターのサイズを少し大きく */
+        height: 35px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0; /* 縮小されないようにする */
       }
       .reactions {
         display: flex;
-        gap: 5px;
-        flex-wrap: wrap;
+        flex-wrap: wrap; /* リアクションが多い場合に折り返す */
+        gap: 8px; /* リアクションボタン間のスペース */
+        margin-top: 8px; /* メッセージとリアクションの間のスペース */
+        padding-top: 8px;
+        border-top: 1px solid #eee; /* 区切り線 */
+        width: 100%;
       }
       .reaction-button {
-        background-color: #e0e0e0;
+        background: #e6e6e6;
         border: none;
-        border-radius: 15px;
-        padding: 5px 10px;
+        padding: 6px 10px;
+        border-radius: 25px;
         cursor: pointer;
-        font-size: 0.8em;
         display: flex;
         align-items: center;
-        gap: 3px;
-        transition: background-color 0.2s;
+        font-size: 0.9em;
+        transition: background 0.2s ease, transform 0.1s ease;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       }
       .reaction-button:hover {
-        background-color: #d0d0d0;
+        background: #dcdcdc;
+        transform: translateY(-1px);
       }
-      .reaction-counter {
-        font-size: 0.7em;
+      .reaction-button:active {
+        transform: translateY(0);
+        box-shadow: none;
+      }
+      .reaction-button span {
+        margin-left: 6px;
+        font-weight: bold;
         color: #555;
+        min-width: 15px; /* カウンターが0でもスペースを確保 */
+        text-align: center;
       }
+      .reaction-icon {
+        font-size: 1.1em; /* 絵文字のサイズ */
+      }
+
       .form {
         display: flex;
-        padding: 10px;
+        padding: 15px;
         border-top: 1px solid #eee;
         background-color: #fff;
       }
       .input {
         flex: 1;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        margin-right: 5px;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        font-size: 1em;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
       }
       .submit {
-        padding: 10px 15px;
+        padding: 12px 25px;
         border: none;
-        border-radius: 4px;
-        background: #007bff;
+        border-radius: 25px;
+        background: linear-gradient(135deg, #007bff, #0056b3);
         color: white;
+        font-size: 1em;
         cursor: pointer;
-        transition: background-color 0.2s;
+        margin-left: 10px;
+        transition: background 0.3s ease, transform 0.1s ease;
+        box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3);
       }
       .submit:hover {
-        background: #0056b3;
+        background: linear-gradient(135deg, #0056b3, #004085);
+        transform: translateY(-1px);
       }
-      .my-message {
-        text-align: right;
-      }
-      .my-message .message-item {
-        background-color: #dcf8c6;
-        margin-left: auto;
-      }
-      .canvas-container {
-        margin-top: 20px;
-        text-align: center;
-      }
-      #canvas {
-        border: solid 1px black;
+      .submit:active {
+        transform: translateY(0);
+        box-shadow: none;
       }
     </style>
   </head>
@@ -106,157 +164,157 @@
       <ul class="messages"></ul>
       <form class="form">
         <input class="input" autocomplete="off" placeholder="メッセージを入力..." />
-        <button class="submit">Send</button>
+        <button class="submit">送信</button>
       </form>
-    </div>
-
-    <div class="canvas-container">
-      <h3>共有お絵かきボード</h3>
-      <canvas id="canvas" width="600" height="400"></canvas>
     </div>
 
     <script>
       function main() {
-        const host = location.origin.replace(/^http/, 'ws');
-        const ws = new WebSocket(host + '/ws');
+        // クライアントのユニークIDを生成
         const myId = self.crypto.randomUUID().substr(0, 8);
 
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        ctx.lineWidth = 2; // 線の太さ
-        ctx.lineJoin = 'round'; // 線の結合部
-        ctx.lineCap = 'round'; // 線の端
-        ctx.strokeStyle = '#000'; // 線の色
+        // WebSocket接続のためのホストURLを決定
+        const host = location.origin.replace(/^http/, 'ws');
+        const ws = new WebSocket(host + '/ws');
 
-        let drawing = false;
-
-        canvas.addEventListener('mousedown', (e) => {
-          drawing = true;
-          sendDrawingEvent(e.offsetX, e.offsetY, 'mousedown');
-        });
-
-        canvas.addEventListener('mousemove', (e) => {
-          if (drawing) {
-            sendDrawingEvent(e.offsetX, e.offsetY, 'mousemove');
-          }
-        });
-
-        canvas.addEventListener('mouseup', (e) => {
-          drawing = false;
-          sendDrawingEvent(e.offsetX, e.offsetY, 'mouseup');
-        });
-
-        canvas.addEventListener('mouseout', (e) => {
-          drawing = false;
-          sendDrawingEvent(e.offsetX, e.offsetY, 'mouseout');
-        });
-
-        function draw(x, y, control) {
-          if (control === 'mousedown') {
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-          } else if (control === 'mousemove') {
-            ctx.lineTo(x, y);
-            ctx.stroke();
-          } else if (control === 'mouseup' || control === 'mouseout') {
-            ctx.closePath();
-          }
-        }
-
-        function sendDrawingEvent(x, y, control) {
-          const message = JSON.stringify({ x, y, control, type: 'paint' });
-          ws.send(message);
-        }
-
+        // DOM要素の参照を取得
+        const form = document.querySelector('.form');
         const messageList = document.querySelector('.messages');
 
-        ws.onmessage = (event) => {
-          const msg = JSON.parse(event.data);
-          if (msg.type === 'paint') {
-            const { x, y, control } = msg;
-            draw(x, y, control);
-          } else if (msg.type === 'chat') {
-            const { id, text, messageId, reactions } = msg;
+        // messageIdをキーとして、対応するメッセージのDOM要素を格納するMap
+        // これにより、リアクション更新時に目的のメッセージ要素を素早く見つけることができる
+        const messageElements = new Map();
+
+        // リアクションタイプとそれに対応する絵文字のマッピング
+        const reactionsMapping = {
+          good: '👍',
+          bad: '👎',
+          excited: '🤩',
+          interesting: '🤔',
+          sad: '😢',
+        };
+
+        // フォームが送信されたときの処理
+        form.onsubmit = function (e) {
+          e.preventDefault(); // デフォルトのフォーム送信を防ぐ
+          const input = document.querySelector('.input');
+          const text = input.value.trim(); // 入力値の前後空白を除去
+
+          if (text) {
+            // テキストが空でない場合のみメッセージを送信
+            const messagePayload = {
+              type: 'chat_message', // メッセージタイプを指定
+              senderId: myId,      // 送信者のID
+              text: text,          // メッセージ本文
+            };
+            // JSON文字列に変換してWebSocketで送信
+            ws.send(JSON.stringify(messagePayload));
+            input.value = ''; // 入力フィールドをクリア
+          }
+          input.focus(); // 入力フィールドにフォーカスを戻す
+        };
+
+        // WebSocketからメッセージを受信したときの処理
+        ws.onmessage = function (event) {
+          const parsedData = JSON.parse(event.data); // 受信したJSONデータをパース
+
+          if (parsedData.type === 'chat_message') {
+            // 新しいチャットメッセージを受信した場合
+            const { messageId, senderId, text, reactions } = parsedData;
+
+            // メッセージを表示するためのリストアイテム(li)を作成
             const li = document.createElement('li');
-            li.classList.add('message-item');
-            li.setAttribute('data-message-id', messageId);
+            li.className = 'message-item';
+            li.dataset.messageId = messageId; // messageIdをdata属性に保存
 
-            const messageContent = document.createElement('div');
-            messageContent.classList.add('message-content');
-            if (id === myId) {
-              li.classList.add('my-message');
-              messageContent.textContent = `(${id})自分: ` + text;
-            } else {
-              messageContent.textContent = id + ': ' + text;
-            }
-            li.appendChild(messageContent);
+            // メッセージ内容（アバターとテキスト）を表示するdivを作成
+            const messageContentDiv = document.createElement('div');
+            messageContentDiv.className = 'message-content';
 
+            // アバター画像を作成
+            const img = document.createElement('img');
+            img.src = `https://api.dicebear.com/9.x/rings/svg?seed=${senderId}`;
+            img.alt = 'Avatar';
+            img.className = 'avatar';
+            messageContentDiv.appendChild(img);
+
+            // メッセージテキストを作成
+            const spanText = document.createElement('span');
+            spanText.className = 'message-text';
+            spanText.textContent = `${senderId}: ${text}`;
+            messageContentDiv.appendChild(spanText);
+
+            li.appendChild(messageContentDiv); // liにメッセージ内容を追加
+
+            // リアクションボタン群を表示するdivを作成
             const reactionsDiv = document.createElement('div');
-            reactionsDiv.classList.add('reactions');
+            reactionsDiv.className = 'reactions';
 
-            const reactionTypes = ['good', 'bad', 'excited', 'interesting', 'sad'];
-            reactionTypes.forEach(reactionType => {
-              const button = document.createElement('button');
-              button.classList.add('reaction-button');
-              button.textContent = getReactionEmoji(reactionType); // 絵文字を設定
-              button.dataset.reactionType = reactionType;
-              button.addEventListener('click', () => {
-                ws.send(JSON.stringify({ type: 'reaction', messageId: messageId, reactionType: reactionType }));
-              });
+            // 各リアクションタイプに対応するボタンとカウンターを作成
+            for (const reactionType in reactionsMapping) {
+              if (reactionsMapping.hasOwnProperty(reactionType)) {
+                const button = document.createElement('button');
+                button.className = 'reaction-button';
+                // 絵文字とカウンターの初期値を設定
+                button.innerHTML = `
+                  <span class="reaction-icon">${reactionsMapping[reactionType]}</span>
+                  <span data-reaction-type="${reactionType}">${reactions[reactionType]}</span>
+                `;
 
-              const counterSpan = document.createElement('span');
-              counterSpan.classList.add('reaction-counter');
-              counterSpan.textContent = reactions[reactionType] || 0; // 初期値を表示
-              counterSpan.setAttribute('data-reaction-type', reactionType);
+                // リアクションボタンがクリックされたときの処理
+                button.onclick = () => {
+                  const reactionPayload = {
+                    type: 'reaction',        // メッセージタイプは「リアクション」
+                    messageId: messageId,    // どのメッセージに対するリアクションか
+                    reactionType: reactionType, // どのリアクションタイプか
+                  };
+                  ws.send(JSON.stringify(reactionPayload)); // JSON文字列に変換して送信
+                };
+                reactionsDiv.appendChild(button); // リアクションdivにボタンを追加
+              }
+            }
+            li.appendChild(reactionsDiv); // liにリアクションdivを追加
 
-              button.appendChild(counterSpan);
-              reactionsDiv.appendChild(button);
-            });
+            messageList.appendChild(li); // メッセージリストに新しいメッセージを追加
+            messageElements.set(messageId, li); // messageIdとli要素の参照をMapに保存
 
-            li.appendChild(reactionsDiv);
-            messageList.appendChild(li);
-            messageList.scrollTop = messageList.scrollHeight; // スクロールを最下部に
-          } else if (msg.type === 'reactionUpdate') {
-            const { messageId, reactionType, count } = msg;
-            const targetMessageLi = document.querySelector(`[data-message-id="${messageId}"]`);
-            if (targetMessageLi) {
-              const counterSpan = targetMessageLi.querySelector(`.reaction-counter[data-reaction-type="${reactionType}"]`);
+            // 新しいメッセージが追加されたら、スクロールを一番下まで移動
+            messageList.scrollTop = messageList.scrollHeight;
+          } else if (parsedData.type === 'reaction_update') {
+            // リアクションの更新を受信した場合
+            const { messageId, reactionType, count } = parsedData;
+            // Mapから対象のメッセージ要素を取得
+            const messageLi = messageElements.get(messageId);
+
+            if (messageLi) {
+              // 特定のリアクションタイプに対応するカウンターのspan要素を検索
+              const counterSpan = messageLi.querySelector(
+                `.reaction-button span[data-reaction-type="${reactionType}"]`
+              );
               if (counterSpan) {
-                counterSpan.textContent = count;
+                counterSpan.textContent = count; // カウンターのテキストを更新
               }
             }
           }
-        }
-
-        function getReactionEmoji(type) {
-          switch (type) {
-            case 'good': return '👍';
-            case 'bad': return '👎';
-            case 'excited': return '🤩';
-            case 'interesting': return '💡';
-            case 'sad': return '😢';
-            default: return '';
-          }
-        }
-
-        const form = document.querySelector('.form');
-
-        form.onsubmit = function (e) {
-          e.preventDefault();
-          const input = document.querySelector('.input');
-          const text = input.value;
-          if (text.trim() === '') return; // 空のメッセージは送信しない
-          ws.send(JSON.stringify({ id: myId, text, type: 'chat' }));
-          input.value = '';
-          input.focus();
         };
 
+        // WebSocketでエラーが発生したときの処理
         ws.onerror = function (error) {
           console.error('WebSocket Error: ', error);
         };
+
+        // WebSocket接続が確立されたときの処理
+        ws.onopen = function() {
+          console.log('WebSocket connection established.');
+        };
+
+        // WebSocket接続が閉じられたときの処理
+        ws.onclose = function() {
+          console.log('WebSocket connection closed.');
+        };
       }
 
-      main();
+      main(); // main関数を実行してアプリケーションを開始
     </script>
   </body>
 </html>
